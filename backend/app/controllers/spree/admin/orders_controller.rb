@@ -91,7 +91,8 @@ module Spree
       rescue Spree::Core::GatewayError => ge
         flash[:error] = "#{ge.message}"
       ensure
-        redirect_to :back
+        edit
+        render :edit
       end
 
       def resend

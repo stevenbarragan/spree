@@ -440,6 +440,12 @@ module Spree
       errors.add(:base, e.message) and return result
     end
 
+    def ensure_line_items_are_in_stock
+      if insufficient_stock_lines.present?
+        errors.add(:base, "#{Spree.t(:insufficient_stock_lines_present)} #{ insufficient_stock_lines.map(&:name).join(', ')}") and false
+      end
+    end
+
     def billing_firstname
       bill_address.try(:firstname)
     end
