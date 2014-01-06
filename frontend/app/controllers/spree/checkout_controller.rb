@@ -55,6 +55,13 @@ module Spree
             redirect_to checkout_state_path(@order.checkout_steps.first)
           end
         end
+
+        # Fix for #4117
+        # If confirmation of payment fails, redirect back to payment screen
+        if params[:state] == "confirm" && @order.payments.valid.empty?
+          flash.keep
+          redirect_to checkout_state_path("payment")
+        end
       end
 
       # Should be overriden if you have areas of your checkout that don't match
@@ -99,7 +106,7 @@ module Spree
       # attributes for a single payment and its source, discarding attributes
       # for payment methods other than the one selected
       def object_params
-        # respond_to check is necessary due to issue described in #2910
+        # has_checkout_step? check is necessary due to issue described in #2910
         if @order.has_checkout_step?("payment") && @order.payment?
           if params[:payment_source].present?
             source_params = params.delete(:payment_source)[params[:order][:payments_attributes].first[:payment_method_id].underscore]
@@ -149,7 +156,7 @@ module Spree
       end
 
       def rescue_from_spree_gateway_error(exception)
-        flash[:error] = Spree.t(:spree_gateway_error_flash_for_checkout)
+        flash.now[:error] = Spree.t(:spree_gateway_error_flash_for_checkout)
         @order.errors.add(:base, exception.message)
         render :edit
       end
@@ -166,7 +173,7 @@ module Spree
           if coupon_result[:coupon_applied?]
             flash[:success] = coupon_result[:success] if coupon_result[:success].present?
           else
-            flash[:error] = coupon_result[:error]
+            flash.now[:error] = coupon_result[:error]
             respond_with(@order) { |format| format.html { render :edit } } and return
           end
         end
