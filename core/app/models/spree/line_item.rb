@@ -22,12 +22,11 @@ module Spree
 
     attr_accessible :quantity, :variant_id
 
-    before_save :update_inventory
-
+    after_save :update_inventory
     after_save :update_order
     after_destroy :update_order
 
-    delegate :name, :description, to: :variant
+    delegate :name, :description, :should_track_inventory?, to: :variant
 
     attr_accessor :target_shipment
 

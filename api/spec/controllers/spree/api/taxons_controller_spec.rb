@@ -7,7 +7,7 @@ module Spree
     let(:taxonomy) { create(:taxonomy) }
     let(:taxon) { create(:taxon, :name => "Ruby", :taxonomy => taxonomy) }
     let(:taxon2) { create(:taxon, :name => "Rails", :taxonomy => taxonomy) }
-    let(:attributes) { ["id", "name", "pretty_name", "permalink", "position", "parent_id", "taxonomy_id"] }
+    let(:attributes) { ["id", "name", "pretty_name", "permalink", "parent_id", "taxonomy_id"] }
 
     before do
       stub_authentication!
@@ -25,6 +25,14 @@ module Spree
         children.count.should eq 1
         children.first['name'].should eq taxon2.name
         children.first['taxons'].count.should eq 1
+      end
+
+      # Regression test for #4112
+      it "does not include children when asked not to" do
+        api_get :index, :taxonomy_id => taxonomy.id, :without_children => 1
+
+        json_response['taxons'].first['name'].should eq(taxon.name)
+        json_response['taxons'].first['taxons'].should be_nil
       end
 
       it "paginates through taxons" do
@@ -105,9 +113,10 @@ module Spree
         response.status.should == 201
 
         taxonomy.reload.root.children.count.should eq 2
+        taxon = Spree::Taxon.where(:name => 'Colors').first
 
-        Spree::Taxon.last.parent_id.should eq taxonomy.root.id
-        Spree::Taxon.last.taxonomy_id.should eq taxonomy.id
+        taxon.parent_id.should eq taxonomy.root.id
+        taxon.taxonomy_id.should eq taxonomy.id
       end
 
       it "cannot create a new taxon with invalid attributes" do
