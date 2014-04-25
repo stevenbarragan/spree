@@ -17,32 +17,27 @@ describe Spree::Order do
   end
 
   context "#products" do
-    before :each do
-      @variant1 = mock_model(Spree::Variant, :product => "product1")
-      @variant2 = mock_model(Spree::Variant, :product => "product2")
-      @line_items = [mock_model(Spree::LineItem, :product => "product1", :variant => @variant1, :variant_id => @variant1.id, :quantity => 1),
-                     mock_model(Spree::LineItem, :product => "product2", :variant => @variant2, :variant_id => @variant2.id, :quantity => 2)]
-      order.stub(:line_items => @line_items)
-    end
+    let(:order) { create :order_with_line_items }
+    let(:variant) { order.variants.first }
+    let(:variant2) { create :variant }
 
     it "should return ordered products" do
-      order.products.should == ['product1', 'product2']
+      expect(order.products.count).to eq 5
     end
 
     it "contains?" do
-      order.contains?(@variant1).should be_true
+      expect(order.contains?(variant)).to be_true
     end
 
     it "gets the quantity of a given variant" do
-      order.quantity_of(@variant1).should == 1
+      expect(order.quantity_of(variant)).to eq 1
 
-      @variant3 = mock_model(Spree::Variant, :product => "product3")
-      order.quantity_of(@variant3).should == 0
+      expect(order.quantity_of(variant2)).to eq 0
     end
 
     it "can find a line item matching a given variant" do
-      order.find_line_item_by_variant(@variant1).should_not be_nil
-      order.find_line_item_by_variant(mock_model(Spree::Variant)).should be_nil
+      expect(order.find_line_item_by_variant(variant)).not_to be_nil
+      expect(order.find_line_item_by_variant(variant2)).to be_nil
     end
   end
 
