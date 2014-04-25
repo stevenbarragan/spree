@@ -43,9 +43,6 @@ module Spree
 
     after_touch :clear_in_stock_cache
 
-    # default variant scope only lists non-deleted variants
-    scope :deleted, lambda { where.not(deleted_at: nil) }
-
     def self.active(currency = nil)
       joins(:prices).where(deleted_at: nil).where('spree_prices.currency' => currency || Spree::Config[:currency]).where('spree_prices.amount IS NOT NULL')
     end
@@ -72,7 +69,7 @@ module Spree
         a.option_type.position <=> b.option_type.position
       end
 
-      values.map! do |ov|
+      values.to_a.map! do |ov|
         "#{ov.option_type.presentation}: #{ov.presentation}"
       end
 
